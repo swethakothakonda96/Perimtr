@@ -1,0 +1,893 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Perimtr API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: sessions
+    description: Attendance session operations
+  - name: polls
+    description: Poll operations
+  - name: device
+    description: Device token operations
+  - name: dashboard
+    description: Dashboard analytics
+  - name: auth
+    description: Authentication endpoints
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── DASHBOARD ────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get overall dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  # ─── SESSIONS ─────────────────────────────────────────────────────
+  /sessions:
+    get:
+      operationId: listSessions
+      tags: [sessions]
+      summary: List all attendance sessions
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Create a new attendance session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionInput"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/{id}:
+    get:
+      operationId: getSession
+      tags: [sessions]
+      summary: Get a session by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateSession
+      tags: [sessions]
+      summary: Update (end or extend) a session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionUpdate"
+      responses:
+        "200":
+          description: Updated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/{id}/delete:
+    delete:
+      operationId: deleteSession
+      tags: [sessions]
+      summary: Permanently delete a session and its attendees
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sessions/{id}/attendees:
+    get:
+      operationId: listAttendees
+      tags: [sessions]
+      summary: List attendees for a session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Attendees list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Attendee"
+
+  /sessions/{id}/checkin:
+    post:
+      operationId: checkIn
+      tags: [sessions]
+      summary: Participant check-in with name and PIN
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInInput"
+      responses:
+        "200":
+          description: Check-in successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckInResult"
+        "400":
+          description: Invalid PIN or locked out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Network mismatch or device already checked in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sessions/{id}/export:
+    get:
+      operationId: exportAttendees
+      tags: [sessions]
+      summary: Export attendees as CSV
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /sessions/{id}/stats:
+    get:
+      operationId: getSessionStats
+      tags: [sessions]
+      summary: Get live stats for a session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionStats"
+
+  # ─── POLLS ────────────────────────────────────────────────────────
+  /polls:
+    get:
+      operationId: listPolls
+      tags: [polls]
+      summary: List all polls
+      responses:
+        "200":
+          description: List of polls
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Poll"
+    post:
+      operationId: createPoll
+      tags: [polls]
+      summary: Create a new poll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PollInput"
+      responses:
+        "201":
+          description: Poll created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Poll"
+
+  /polls/{id}:
+    get:
+      operationId: getPoll
+      tags: [polls]
+      summary: Get a poll by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Poll
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Poll"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePoll
+      tags: [polls]
+      summary: Update (end) a poll
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PollUpdate"
+      responses:
+        "200":
+          description: Updated poll
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Poll"
+
+  /polls/{id}/delete:
+    delete:
+      operationId: deletePoll
+      tags: [polls]
+      summary: Permanently delete a poll and its votes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /polls/{id}/vote:
+    post:
+      operationId: castVote
+      tags: [polls]
+      summary: Cast a vote on a poll
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoteInput"
+      responses:
+        "200":
+          description: Vote cast
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoteResult"
+        "400":
+          description: Already voted or invalid option
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Network mismatch or PIN required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /polls/{id}/results:
+    get:
+      operationId: getPollResults
+      tags: [polls]
+      summary: Get live poll results
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Poll results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PollResults"
+
+  # ─── DEVICE ───────────────────────────────────────────────────────
+  /device/token:
+    post:
+      operationId: getOrCreateDeviceToken
+      tags: [device]
+      summary: Get or create a device token from fingerprint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceFingerprint"
+      responses:
+        "200":
+          description: Device token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceTokenResponse"
+
+  /network/verify:
+    post:
+      operationId: verifyNetwork
+      tags: [device]
+      summary: Verify device is on the same LAN as admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NetworkVerifyInput"
+      responses:
+        "200":
+          description: Network verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkVerifyResult"
+
+  /auth/user:
+    get:
+      tags: [auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      responses:
+        '200':
+          description: Current user or null.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserEnvelope'
+
+  /auth/register:
+    post:
+      tags: [auth]
+      operationId: registerAdmin
+      summary: Create a new admin account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInput'
+      responses:
+        '201':
+          description: Account created and session started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUser'
+        '409':
+          description: Email already in use.
+
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: loginAdmin
+      summary: Sign in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: Signed in successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUser'
+        '401':
+          description: Invalid credentials.
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logoutAdmin
+      summary: Sign out and destroy the session
+      responses:
+        '200':
+          description: Signed out.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success:
+                    type: boolean
+
+  /polls/{id}/export:
+    get:
+      operationId: exportPollResults
+      tags: [polls]
+      summary: Export poll vote results as CSV
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      description: Opaque session token — `Bearer <sid>`.
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      description: Browser session cookie.
+      schema:
+        type: string
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        attemptsRemaining:
+          type: ["integer", "null"]
+
+    DashboardStats:
+      type: object
+      required: [totalSessions, totalAttendees, totalPolls, totalVotes, activeSessions, activePolls]
+      properties:
+        totalSessions:
+          type: integer
+        totalAttendees:
+          type: integer
+        totalPolls:
+          type: integer
+        totalVotes:
+          type: integer
+        activeSessions:
+          type: integer
+        activePolls:
+          type: integer
+
+    Session:
+      type: object
+      required: [id, title, pin, status, durationSeconds, networkKey, createdAt, expiresAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        pin:
+          type: string
+        status:
+          type: string
+          enum: [active, expired, ended]
+        durationSeconds:
+          type: integer
+        networkKey:
+          type: string
+        attendeeCount:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        expiresAt:
+          type: string
+
+    SessionInput:
+      type: object
+      required: [title, durationSeconds]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        durationSeconds:
+          type: integer
+          minimum: 30
+
+    SessionUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ended]
+
+    SessionStats:
+      type: object
+      required: [sessionId, title, attendeeCount, status, expiresAt]
+      properties:
+        sessionId:
+          type: integer
+        title:
+          type: string
+        attendeeCount:
+          type: integer
+        status:
+          type: string
+        expiresAt:
+          type: string
+        checkInsOverTime:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimePoint"
+
+    TimePoint:
+      type: object
+      required: [time, count]
+      properties:
+        time:
+          type: string
+        count:
+          type: integer
+
+    Attendee:
+      type: object
+      required: [id, sessionId, name, deviceToken, checkedInAt]
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: integer
+        name:
+          type: string
+        deviceToken:
+          type: string
+        checkedInAt:
+          type: string
+        ipAddress:
+          type: ["string", "null"]
+
+    CheckInInput:
+      type: object
+      required: [name, pin, deviceToken]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 4
+        deviceToken:
+          type: string
+
+    CheckInResult:
+      type: object
+      required: [success, attendeeId, name]
+      properties:
+        success:
+          type: boolean
+        attendeeId:
+          type: integer
+        name:
+          type: string
+
+    Poll:
+      type: object
+      required: [id, question, options, pinRequired, status, createdAt]
+      properties:
+        id:
+          type: integer
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        pin:
+          type: ["string", "null"]
+        pinRequired:
+          type: boolean
+        networkKey:
+          type: string
+        status:
+          type: string
+          enum: [active, ended]
+        totalVotes:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    PollInput:
+      type: object
+      required: [question, options, pinRequired]
+      properties:
+        question:
+          type: string
+          minLength: 1
+        options:
+          type: array
+          items:
+            type: string
+          minItems: 2
+        pinRequired:
+          type: boolean
+
+    PollUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ended]
+        pinRequired:
+          type: boolean
+
+    VoteInput:
+      type: object
+      required: [optionIndex, deviceToken]
+      properties:
+        optionIndex:
+          type: integer
+          minimum: 0
+        deviceToken:
+          type: string
+        pin:
+          type: ["string", "null"]
+
+    VoteResult:
+      type: object
+      required: [success, optionIndex]
+      properties:
+        success:
+          type: boolean
+        optionIndex:
+          type: integer
+
+    PollResults:
+      type: object
+      required: [pollId, question, options, totalVotes]
+      properties:
+        pollId:
+          type: integer
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/PollOption"
+        totalVotes:
+          type: integer
+        status:
+          type: string
+
+    PollOption:
+      type: object
+      required: [label, votes, percentage]
+      properties:
+        label:
+          type: string
+        votes:
+          type: integer
+        percentage:
+          type: number
+
+    DeviceFingerprint:
+      type: object
+      required: [fingerprint]
+      properties:
+        fingerprint:
+          type: string
+        userAgent:
+          type: ["string", "null"]
+        platform:
+          type: ["string", "null"]
+        screenResolution:
+          type: ["string", "null"]
+        timezone:
+          type: ["string", "null"]
+        hardwareConcurrency:
+          type: ["integer", "null"]
+        deviceMemory:
+          type: ["string", "null"]
+
+    DeviceTokenResponse:
+      type: object
+      required: [token, isNew]
+      properties:
+        token:
+          type: string
+        isNew:
+          type: boolean
+
+    NetworkVerifyInput:
+      type: object
+      properties:
+        sessionId:
+          type: ["integer", "null"]
+        pollId:
+          type: ["integer", "null"]
+
+    NetworkVerifyResult:
+      type: object
+      required: [allowed, reason]
+      properties:
+        allowed:
+          type: boolean
+        reason:
+          type: string
+
+    AuthUser:
+      type: object
+      required: [id, email, name]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+
+    RegisterInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+

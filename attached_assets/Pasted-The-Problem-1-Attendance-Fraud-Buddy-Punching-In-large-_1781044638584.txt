@@ -1,0 +1,22 @@
+The Problem
+1.	Attendance Fraud ("Buddy-Punching"): In large lectures or corporate training sessions, absent participants frequently text join-codes or links to peers, faking attendance and skewing compliance records.
+2.	Proxy Voting & Skewed Data: Standard polling links do not verify identity or location, allowing motivated users to open multiple browser tabs or incognito windows to vote multiple times.
+3.	High User Friction: Forcing participants to register, download software, or log in to complete a 30-second task decimates response rates and wastes valuable session time.
+Core Product Architecture & Features
+SyncPoll operates through a clean, unified dashboard featuring two distinct application modules designed for maximum security and compliance.
+1. The Attendance Module
+Designed for university lectures, corporate training compliance, and town halls.
+•	Dynamic Entry & Custom Timers: When an administrator initiates a session, the system projects a dynamic QR code paired with a temporary 4-digit PIN. The admin controls exactly how long this PIN appears on the screen. Whether it is a 60-second window for a quick check-in or a 5-minute window for a larger crowd, the admin sets the precise countdown timer before the PIN permanently expires.
+•	The "Three-Strikes" Gate: To prevent brute-force guessing from unauthorized users, participants are restricted to exactly three attempts to input the correct PIN before their device is locked out.
+•	Frictionless, Verified Sign-In: Scanning the QR code automatically checks the network alignment and routes the user to a secure input field requiring their full name and the active PIN.
+•	Admin Analytics: Every verified entry automatically links the participant's full name to a unique, secure hardware token stored in the centralized database. Admins can instantly compile and export clean, Excel-ready CSV logs for institutional record-keeping.
+2. The Voting Module
+Designed for high-stakes board member voting and real-time student opinion polling.
+•	Custom Poll Authoring: Admins can quickly draft custom questions featuring multiple-choice options, launching the poll to the room alongside a custom QR code.
+•	Flexible Security Toggles: For low-stakes interactions, admins can choose to make the 4-digit PIN optional for faster entry. For high-stakes board votes, full PIN protection can be toggled on instantly.
+•	Strict Democratic Integrity: The system enforces a strict "one user, one token, one vote" protocol. Once a vote is cast, it is permanently logged against that unique device signature, ensuring absolute data integrity.
+Core Security Constraints & Anti-Cheating Logic
+To deliver on the promise of "Proof of Presence," SyncPoll runs three silent, automated security checks the moment a user scans the QR code:
+•	Local Network Matching: The application automatically assesses the user's connection environment. If the participant's device is not operating on the exact same local area network (LAN/Wi-Fi) as the administrator's host machine, access is completely blocked, and the user is met with a "Not on the Same Network" error screen. This completely neutralizes remote participation.
+•	Cross-Browser Lockout: Once a user completes their attendance check-in or casts a vote, their unique hardware signature is locked. If they attempt to open the same QR link using a different browser (e.g., switching from Safari to Chrome) or an incognito window on the same device, the system detects the repeating hardware profile and denies entry.
+•	Account-Free Device Tokenization: Rather than forcing users to manage usernames and passwords, SyncPoll creates a secure, temporary session token directly tied to the physical device. This maintains a completely frictionless user experience while upholding rigid security standards.
