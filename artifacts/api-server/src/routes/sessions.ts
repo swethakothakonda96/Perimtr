@@ -6,7 +6,7 @@ import {
   lockoutsTable,
   devicesTable,
 } from "@workspace/db";
-import { eq, and, count, desc } from "drizzle-orm";
+import { eq, and, count, desc, inArray } from "drizzle-orm";
 import {
   CreateSessionBody,
   UpdateSessionBody,
@@ -163,7 +163,7 @@ router.get("/:id/attendees", async (req: Request, res: Response) => {
     ? await db.select().from(devicesTable).where(
         deviceTokens.length === 1
           ? eq(devicesTable.token, deviceTokens[0])
-          : devicesTable.token.in(deviceTokens)
+          : inArray(devicesTable.token, deviceTokens)
       )
     : [];
   const deviceMap = Object.fromEntries(devices.map((d) => [d.token, d]));
