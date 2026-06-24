@@ -1,0 +1,3 @@
+- [Auth naming collision](auth-naming-collision.md) — `authSessionsTable` used for OIDC sessions to avoid clash with SyncPoll's `sessionsTable`.
+- [lockoutsTable location](lockouts-location.md) — lockouts are defined in `lib/db/src/schema/devices.ts`, not a separate file.
+- [replit-auth-web composite lib](replit-auth-web-lib.md) — must have composite/declarationMap/emitDeclarationOnly in tsconfig and be in root tsconfig.json references; avoid import.meta.env in lib code.

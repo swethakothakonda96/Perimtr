@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Perimtr"
+version = "1.0.0"
+id = "artifacts/syncpoll"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20299
+
+[services.development]
+run = "pnpm --filter @workspace/syncpoll run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/syncpoll", "run", "build" ]
+publicDir = "artifacts/syncpoll/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20299"
+BASE_PATH = "/"
